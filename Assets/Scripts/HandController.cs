@@ -25,11 +25,17 @@ namespace TheFrightBeforeChristmas
         [Tooltip("Angular offset in degrees added to the rotation.")]
         [SerializeField] private float rotationOffset = 0f;
 
+        [Tooltip("Flip the hand's Y local scale when on the left (X-) side of the body.")]
+        [SerializeField] private bool flipYOnLeftSide = true;
+
+        private float _baseScaleY;
         private Camera _targetCamera;
         private Camera TargetCamera => _targetCamera != null ? _targetCamera : (_targetCamera = Camera.main);
 
         private void Awake()
         {
+            _baseScaleY = Mathf.Abs(transform.localScale.y);
+
             if (pivot == null && transform.parent != null)
             {
                 pivot = transform.parent;
@@ -136,6 +142,14 @@ namespace TheFrightBeforeChristmas
                 {
                     transform.rotation = targetRotation;
                 }
+            }
+
+            if (flipYOnLeftSide)
+            {
+                Vector3 currentScale = transform.localScale;
+                float sign = (targetPosition.x < pivotPosition.x) ? -1f : 1f;
+                currentScale.y = _baseScaleY * sign;
+                transform.localScale = currentScale;
             }
         }
     }
