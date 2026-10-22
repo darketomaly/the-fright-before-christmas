@@ -72,7 +72,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 682848969297525701}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cad4eebd593919d4589405ec4afcde50, type: 3}
   m_Name: 
@@ -83,6 +83,7 @@ MonoBehaviour:
   smoothSpeed: 0
   rotateTowardsMouse: 1
   rotationOffset: 0
+  flipYOnLeftSide: 1
 --- !u!1 &1667823719925399320
 GameObject:
   m_ObjectHideFlags: 0
