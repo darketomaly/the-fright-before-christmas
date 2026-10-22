@@ -9,8 +9,8 @@ namespace TheFrightBeforeChristmas
         [Tooltip("The body/pivot transform around which the hand rotates. Defaults to parent.")]
         [SerializeField] private Transform pivot;
 
-        [Tooltip("Distance from the pivot to maintain. Set to 0 to keep initial distance.")]
-        [SerializeField] private float distance = 0f;
+        [Tooltip("Half-extents (X and Y radii) of the movement path around the body. Auto-calculated from initial position or body size if left at 0.")]
+        [SerializeField] private Vector2 radius = Vector2.zero;
 
         [Tooltip("Smoothing speed for following the mouse. 0 means instant.")]
         [SerializeField] private float smoothSpeed = 0f;
@@ -32,13 +32,33 @@ namespace TheFrightBeforeChristmas
                 pivot = transform.parent;
             }
 
-            if (distance <= 0f && pivot != null)
+            if (radius.x <= 0f || radius.y <= 0f)
             {
-                Vector3 offset = transform.position - pivot.position;
-                distance = new Vector2(offset.x, offset.y).magnitude;
-                if (distance <= 0f)
+                if (pivot != null)
                 {
-                    distance = 1f;
+                    // If the body has a collider or renderer, use its half-extents plus a margin
+                    if (pivot.TryGetComponent<Collider>(out var col))
+                    {
+                        var extents = col.bounds.extents;
+                        radius = new Vector2(extents.x + 0.3f, extents.y + 0.3f);
+                    }
+                    else if (pivot.TryGetComponent<Renderer>(out var rend))
+                    {
+                        var extents = rend.bounds.extents;
+                        radius = new Vector2(extents.x + 0.3f, extents.y + 0.3f);
+                    }
+                    else
+                    {
+                        Vector3 offset = transform.position - pivot.position;
+                        radius = new Vector2(
+                            radius.x > 0f ? radius.x : Mathf.Max(Mathf.Abs(offset.x), 0.5f),
+                            radius.y > 0f ? radius.y : Mathf.Max(Mathf.Abs(offset.y), 1.0f)
+                        );
+                    }
+                }
+                else
+                {
+                    radius = new Vector2(0.5f, 1.0f);
                 }
             }
         }
@@ -69,10 +89,11 @@ namespace TheFrightBeforeChristmas
 
             direction.Normalize();
 
-            // Calculate target position on the XY plane around the pivot
+            // Calculate target position along the elliptical path on the XY plane around the pivot
+            float angle = Mathf.Atan2(direction.y, direction.x);
             Vector3 targetPosition = new Vector3(
-                pivotPosition.x + direction.x * distance,
-                pivotPosition.y + direction.y * distance,
+                pivotPosition.x + Mathf.Cos(angle) * radius.x,
+                pivotPosition.y + Mathf.Sin(angle) * radius.y,
                 transform.position.z
             );
 
@@ -87,8 +108,8 @@ namespace TheFrightBeforeChristmas
 
             if (rotateTowardsMouse)
             {
-                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg + rotationOffset;
-                Quaternion targetRotation = Quaternion.Euler(0f, 0f, angle);
+                float rotAngle = angle * Mathf.Rad2Deg + rotationOffset;
+                Quaternion targetRotation = Quaternion.Euler(0f, 0f, rotAngle);
 
                 if (smoothSpeed > 0f)
                 {
