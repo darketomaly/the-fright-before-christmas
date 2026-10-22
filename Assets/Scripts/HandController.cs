@@ -12,6 +12,9 @@ namespace TheFrightBeforeChristmas
         [Tooltip("Half-extents (X and Y radii) of the movement path around the body. Auto-calculated from initial position or body size if left at 0.")]
         [SerializeField] private Vector2 radius = Vector2.zero;
 
+        [Tooltip("Minimum normalized Y position relative to the pivot (-1 is bottom, 0 is center/hips, 1 is top).")]
+        [SerializeField] private float minY = 0f;
+
         [Tooltip("Smoothing speed for following the mouse. 0 means instant.")]
         [SerializeField] private float smoothSpeed = 0f;
 
@@ -91,6 +94,20 @@ namespace TheFrightBeforeChristmas
 
             // Calculate target position along the elliptical path on the XY plane around the pivot
             float angle = Mathf.Atan2(direction.y, direction.x);
+
+            // Restrict from going below the hips (minY threshold, where 0 is pivot height)
+            float minSin = Mathf.Clamp(minY, -1f, 1f);
+            float minAngle = Mathf.Asin(minSin); // in [-pi/2, pi/2]
+            float maxAngle = Mathf.PI - minAngle; // corresponding angle on negative X side
+
+            // Allowed angle range for the upper arc is [minAngle, maxAngle].
+            // If the angle falls below this range (i.e. into the bottom region below hips):
+            if (angle < minAngle || angle > maxAngle)
+            {
+                // Determine whether mouse is on the right (x >= 0) or left (x < 0) side of the body
+                angle = direction.x >= 0f ? minAngle : maxAngle;
+            }
+
             Vector3 targetPosition = new Vector3(
                 pivotPosition.x + Mathf.Cos(angle) * radius.x,
                 pivotPosition.y + Mathf.Sin(angle) * radius.y,

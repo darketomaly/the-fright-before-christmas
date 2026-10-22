@@ -79,6 +79,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HandController
   pivot: {fileID: 2730006078704423369}
   radius: {x: 0.5, y: 1.25}
+  minY: 0.3
   smoothSpeed: 0
   rotateTowardsMouse: 1
   rotationOffset: 0
