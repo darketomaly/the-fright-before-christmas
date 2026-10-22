@@ -1,7 +1,5 @@
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-#endif
 
 namespace TheFrightBeforeChristmas
 {
@@ -24,9 +22,8 @@ namespace TheFrightBeforeChristmas
         [Tooltip("Angular offset in degrees added to the rotation.")]
         [SerializeField] private float rotationOffset = 0f;
 
-        [Header("Camera")]
-        [Tooltip("Camera used to project screen/mouse position. Defaults to Camera.main.")]
-        [SerializeField] private Camera targetCamera;
+        private Camera _targetCamera;
+        private Camera TargetCamera => _targetCamera != null ? _targetCamera : (_targetCamera = Camera.main);
 
         private void Awake()
         {
@@ -44,11 +41,6 @@ namespace TheFrightBeforeChristmas
                     distance = 1f;
                 }
             }
-
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
         }
 
         private void Update()
@@ -58,19 +50,14 @@ namespace TheFrightBeforeChristmas
 
         private void FollowMouse()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-                if (targetCamera == null) return;
-            }
+            if (Mouse.current == null || TargetCamera == null) return;
 
             Vector3 pivotPosition = pivot != null ? pivot.position : Vector3.zero;
 
-            Vector2? mouseScreenPos = GetMouseScreenPosition();
-            if (!mouseScreenPos.HasValue) return;
+            Vector2 mouseScreenPos = Mouse.current.position.ReadValue();
 
             // Project mouse position onto the XY plane at the pivot's Z depth
-            Ray ray = targetCamera.ScreenPointToRay(mouseScreenPos.Value);
+            Ray ray = TargetCamera.ScreenPointToRay(mouseScreenPos);
             Plane xyPlane = new Plane(Vector3.forward, new Vector3(0f, 0f, pivotPosition.z));
 
             if (!xyPlane.Raycast(ray, out float enter)) return;
@@ -112,17 +99,6 @@ namespace TheFrightBeforeChristmas
                     transform.rotation = targetRotation;
                 }
             }
-        }
-
-        private Vector2? GetMouseScreenPosition()
-        {
-#if ENABLE_INPUT_SYSTEM
-            if (Mouse.current != null)
-            {
-                return Mouse.current.position.ReadValue();
-            }
-#endif
-            return Input.mousePosition;
         }
     }
 }
